@@ -4,39 +4,16 @@ import {TableService} from "./table.service";
 import {Location} from "@angular/common";
 import "rxjs/add/operator/switchMap";
 import {IMyOptions, IMyDateModel} from "mydatepicker";
+import {FollowupService} from "./followup.service";
+import {Followup} from "./Followup";
+import {FormGroup} from "@angular/forms";
+import {Status} from "./status";
+import {StatusService} from "./status.service";
 
 
 @Component({
   moduleId: module.id,
-  template: `
-<a href="#" (click)="goBack()">back</a>
-
-{{selectedRow.NAME}}
-
-<ul>
-<li *ngFor="let field of fields">
-<div class="row field-row">
-<div class="col-lg-3 text-right">
-<label for="field_{{field}}" class="field-label">{{field}}</label>
-</div>
-<div class="col-lg-3">
-<input type="text" *ngIf="!checkIfBoolean(selectedRow[field]) && !checkIfDateField(field)" [maxlength]="100" class="field-value"
-id="field_{{field}}" [disabled]="field=='id'" [(ngModel)]="selectedRow[field]">
-<input type="checkbox" *ngIf="checkIfBoolean(selectedRow[field])" id="field_{{field}}" [(ngModel)]="selectedRow[field]">
-<my-date-picker *ngIf="checkIfDateField(field)" [(ngModel)]="selectedRow[field]" [options]="myDatePickerOptions" (dateChanged)="onDateChanged($event)"></my-date-picker>
-
-</div>
-</div>
-</li>
-</ul>
-
-<div>
-<input type="button" class="btn" value="Save" (click)="save()">
-<input type="button" class="link" value="Cancel" (click)="goBack()">
-</div>
-
-
-`,
+  templateUrl: 'table-detail.component.html',
 
   styleUrls: ['table-detail.component.css']
 
@@ -47,25 +24,28 @@ export class TableDetailComponent {
   @Input()
   selectedRow: any = {};
   dateFields: string[] = [];
+  followups: Followup[] = [];
+  newFollowup: Followup = new Followup();
+  statuses:Status[];
 
 
   private myDatePickerOptions: IMyOptions = {
     dateFormat: 'dd-mm-yyyy',
     showClearDateBtn: false,
     editableDateField: false,
-    width: '50%',
+    width: '100%',
     height: '30px'
   };
 
   ngOnInit(): void {
     this.route.params
       .switchMap((params: Params) => {
-      console.log("ts", this.tableService);
-      console.log("ts", params['id']);
-      console.log("ts", this.tableService.getTableDetail(+params['id']));
-      return this.tableService.getTableDetail(+params['id']);})
+        return this.tableService.getTableDetail(+params['id']);
+      })
       .subscribe((row: any) => {
         this.selectedRow = row;
+        console.log("ngOnInit");
+
         this.fields = this.extractFieldNames(row);
         for (let field of this.fields) {
           if (this.checkIfDate(this.selectedRow[field])) {
@@ -79,6 +59,8 @@ export class TableDetailComponent {
           }
         }
       });
+    this.statusService.getStatuses().then(statuses => this.statuses = statuses);
+
   }
 
   goBack(): void {
@@ -107,9 +89,7 @@ export class TableDetailComponent {
   fields: string[];
 
 
-  constructor(private tableService: TableService,
-              private route: ActivatedRoute,
-              private location: Location) {
+  constructor(private tableService: TableService, private followupService: FollowupService, private statusService:StatusService, private route: ActivatedRoute, private location: Location) {
   }
 
   onDateChanged(event: IMyDateModel) {
@@ -145,6 +125,27 @@ export class TableDetailComponent {
 
   checkIfBoolean(value: any) {
     return typeof(value) === "boolean"
+  }
+
+  convertDate(input:string):string{
+    let parts = input.split('-');
+    if (parts.length == 3) {
+      console.log("init", parts[0], parts[1], parts[2]);
+      return parts[2] + '-' + parts[1] + '-' + parts[0];
+    }else{
+      console.error("!!! date input cannot be parsed to yyyy-MM-dd");
+    }
+  }
+
+  createFollowup(followup: Followup): void {
+    followup.dueDate = this.convertDate(followup.dueDate['formatted']);
+    this.followupService.create(followup, this.selectedRow.id).then(() => {
+      return this.followupService.getFollowups(this.selectedRow.id)
+    }).then(followups => {
+      console.log("saveNew", followups);
+      this.selectedRow.followups = followups;
+    });
+
   }
 
 }

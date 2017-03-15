@@ -16,13 +16,16 @@ import {HttpModule} from "@angular/http";
 import {InMemoryWebApiModule} from "angular-in-memory-web-api";
 import {DemoComponent} from "./demo.component";
 import {MyDatePickerModule} from "mydatepicker";
+import {FollowupService} from "./followup.service";
+import {OrderByPipe} from "./utils/order-by";
+import {StatusService} from "./status.service";
 
 @NgModule({
   imports:      [ BrowserModule, FormsModule, PopoverModule, DndModule.forRoot(), Ng2PaginationModule, HttpModule,
       AppRoutingModule, MyDatePickerModule
   ],
-  declarations: [ AppComponent, DemoComponent, TableComponent, TableDetailComponent, MinPipe, Hide],
+  declarations: [ AppComponent, DemoComponent, TableComponent, TableDetailComponent, MinPipe, Hide, OrderByPipe],
   bootstrap:    [ AppComponent ],
-  providers: [TableService]
+  providers: [TableService, FollowupService, StatusService]
 })
 export class AppModule { }
