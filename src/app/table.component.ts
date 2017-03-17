@@ -2,6 +2,7 @@ import {Component, Input, EventEmitter, Output, OnInit} from "@angular/core";
 import {Column} from "./Column";
 import {DataTableParams} from "./types";
 import {DataTableResource} from "./data-table-resource";
+import {Followup} from "./followup";
 
 @Component({
   moduleId: module.id,
@@ -17,6 +18,7 @@ export class TableComponent implements OnInit {
   private _columns: Column[] = [];
   private _activableColumns: string[] = [];
   private _sortableColumns: string[] = [];
+  @Input() private hiddenColumns: string[] = [];
 
   @Input() get itemsPromise() {
     return this._itemsPromise;
@@ -102,10 +104,16 @@ export class TableComponent implements OnInit {
       }
       this._initDefaultClickEvents();
 
-      for (let sortCol of this.sortableColumns) {
-        for (let col of this.columns) {
+      for (let col of this.columns) {
+        for (let sortCol of this.sortableColumns) {
           if (col.name.toUpperCase() === sortCol.toUpperCase()) {
             col.sortable = true;
+          }
+        }
+
+        for (let hideCol of this.hiddenColumns) {
+          if (col.name.toUpperCase() === hideCol.toUpperCase()) {
+            col.active = false;
           }
         }
       }
@@ -115,6 +123,9 @@ export class TableComponent implements OnInit {
 
     }).then(queryItems => {
       this.items = queryItems;
+      for (let item of this.items) {
+        item.followups = this.getLastFollowupDate(item.followups);
+      }
     });
 
     this._displayParams = {
@@ -232,8 +243,18 @@ export class TableComponent implements OnInit {
       this.selectedItems = []
     }
     this.multiSelect.emit(this.selectedItems);
+  }
 
+  getLastFollowupDate(followups: Followup[]): String {
+    let lastFUDate: string;
+    if (followups.length > 0) {
+      let lastDueDate = followups[followups.length - 1].dueDate;
+      if (lastFUDate)
+        lastFUDate = new Date(lastDueDate).toDateString()
+    }
+    console.log("getLastFollowupDate", lastFUDate);
 
+    return lastFUDate;
   }
 }
 

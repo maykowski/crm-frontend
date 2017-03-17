@@ -39,4 +39,6 @@ font-family: ProximaNovaRegular;
   margin-bottom:auto;
   padding:5px;
 }
+th,td,label{  font-family: ProximaNovaRegular;
+}
 

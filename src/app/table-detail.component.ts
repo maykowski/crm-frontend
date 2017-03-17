@@ -138,7 +138,7 @@ export class TableDetailComponent {
   }
 
   createFollowup(followup: Followup): void {
-    followup.dueDate = this.convertDate(followup.dueDate['formatted']);
+    if (followup.dueDate) followup.dueDate = this.convertDate(followup.dueDate['formatted']);
     this.followupService.create(followup, this.selectedRow.id).then(() => {
       return this.followupService.getFollowups(this.selectedRow.id)
     }).then(followups => {

@@ -6,7 +6,7 @@ import {TableService} from "./table.service";
     moduleId: module.id,
     selector: 'demo',
     template: `<table-component (reload)="reloadItems($event)"         [itemsPromise]="rowsPromise" (multiSelect)="getSelected($event)"
-[activableColumns]="activableColumns"         [itemCount]="itemCount" [sortableColumns]="sortableColumns"
+[activableColumns]="activableColumns"         [itemCount]="itemCount" [sortableColumns]="sortableColumns" [hiddenColumns]="hiddenColumns"
 
 ></table-component>`
 })
@@ -15,7 +15,8 @@ export class DemoComponent implements OnInit {
   rowsPromise:Promise<any[]>;
 
   activableColumns: string[] = ['name'];
-  sortableColumns: string[] = ['name', 'job title', "DATE"];
+  sortableColumns: string[] = ['name', 'followups'];
+  hiddenColumns: string[] = ['summary','lid', 'createDate', 'updateDate', 'id', 'link', 'email'];
   itemCount = 0;
 
 
