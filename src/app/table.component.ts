@@ -125,6 +125,7 @@ export class TableComponent implements OnInit {
       this.items = queryItems;
       for (let item of this.items) {
         item.followups = this.getLastFollowupDate(item.followups);
+        item.lastFollowupDate = this.getLastFollowupDate(item.followups);
       }
     });
 

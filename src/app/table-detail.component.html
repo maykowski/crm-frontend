@@ -5,18 +5,95 @@
 <div class="row">
   <div class="col-lg-5">
     <ul>
-      <li *ngFor="let field of fields">
+      <!--id-->
+      <li>
         <div class="row field-row">
-          <div class="col-lg-3 text-right">
-            <label for="field_{{field}}" class="field-label">{{field}}</label>
-          </div>
+          <div class="col-lg-3 text-right"><label class="field-label">id</label></div>
+          <div class="col-lg-9">{{selectedRow.id}}</div>
+        </div>
+      </li>
+      <!--name-->
+      <li>
+        <div class="row field-row">
+          <div class="col-lg-3 text-right"><label class="field-label">Name</label></div>
           <div class="col-lg-9">
-            <input type="text" *ngIf="!checkIfBoolean(selectedRow[field]) && !checkIfDateField(field)" [maxlength]="100" class="field-value"
-                   id="field_{{field}}" [disabled]="field=='id'" [(ngModel)]="selectedRow[field]">
-            <input type="checkbox" *ngIf="checkIfBoolean(selectedRow[field])" id="field_{{field}}" [(ngModel)]="selectedRow[field]">
-            <my-date-picker *ngIf="checkIfDateField(field)" [(ngModel)]="selectedRow[field]" [options]="myDatePickerOptions" (dateChanged)="onDateChanged($event)"></my-date-picker>
-
+            <input type="text" [maxlength]="100" class="field-value" [(ngModel)]="selectedRow.name">
           </div>
+        </div>
+      </li>
+      <!--title-->
+      <li>
+        <div class="row field-row">
+          <div class="col-lg-3 text-right"><label class="field-label">Title</label></div>
+          <div class="col-lg-9">
+            <input type="text" [maxlength]="100" class="field-value" [(ngModel)]="selectedRow.title">
+          </div>
+        </div>
+      </li>
+      <!--location-->
+      <li>
+        <div class="row field-row">
+          <div class="col-lg-3 text-right"><label class="field-label">location</label></div>
+          <div class="col-lg-9">{{selectedRow.location}}</div>
+        </div>
+      </li>
+      <!--phone-->
+      <li>
+        <div class="row field-row">
+          <div class="col-lg-3 text-right"><label class="field-label">phone</label></div>
+          <div class="col-lg-9">{{selectedRow.phone}} {{selectedRow.phoneSummary}}</div>
+        </div>
+      </li>
+      <!--email1-->
+      <li>
+        <div class="row field-row">
+          <div class="col-lg-3 text-right"><label class="field-label">email 1</label></div>
+          <div class="col-lg-9">{{selectedRow.email}}</div>
+        </div>
+      </li>
+      <!--email2-->
+      <li>
+        <div class="row field-row">
+          <div class="col-lg-3 text-right"><label class="field-label">email 2</label></div>
+          <div class="col-lg-9">
+            <input type="text" [maxlength]="100" class="field-value" [(ngModel)]="selectedRow.email2">
+          </div>
+        </div>
+      </li>
+      <li>
+        <div class="row field-row">
+          <div class="col-lg-3 text-right"><label class="field-label">Training</label></div>
+          <div class="col-lg-9">
+      <training (trEmitter)="setToContact($event)" [contact]="row$"></training>
+          </div>
+        </div>
+      </li>
+      <!--linkedin-->
+      <li>
+        <div class="row field-row">
+          <div class="col-lg-3 text-right"><label class="field-label">linkedin</label></div>
+          <div class="col-lg-9"><a href="http://www.linkedin.com{{selectedRow.link}}" target="_blank">{{selectedRow.link}}</a></div>
+        </div>
+      </li>
+      <!--summary-->
+      <li>
+        <div class="row field-row">
+          <div class="col-lg-3 text-right"><label class="field-label">summary</label></div>
+          <div class="col-lg-9">{{selectedRow.summary}}</div>
+        </div>
+      </li>
+      <!--create date-->
+      <li>
+        <div class="row  field-row">
+          <div class="col-lg-3 text-right"><label class="field-label">create date</label></div>
+          <div class="col-lg-9">{{selectedRow.createDate | date:'dd-MM-yyyy'}}</div>
+        </div>
+      </li>
+      <!--update date-->
+      <li>
+        <div class="row field-row">
+          <div class="col-lg-3 text-right"><label class="field-label">update date</label></div>
+          <div class="col-lg-9">{{selectedRow.updateDate | date:'dd-MM-yyyy'}}</div>
         </div>
       </li>
     </ul>

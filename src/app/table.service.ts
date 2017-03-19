@@ -1,6 +1,8 @@
 import {Injectable} from '@angular/core';
-import {Http, Headers} from "@angular/http";
+import {Http, Headers, Response} from "@angular/http";
 import 'rxjs/add/operator/toPromise';
+import {Observable} from "rxjs/Rx";
+import {Contact} from "./contact";
 
 @Injectable()
 export class TableService{
@@ -17,6 +19,11 @@ export class TableService{
       .toPromise()
       .then(response => response.json())
       .catch(this.handleError);
+  }
+  getTableDetail2(id: number): Observable<Contact> {
+    const url = `${this.tableDetUrl}/${id}`;
+    return this.http.get(url).map((res:Response) => res.json())
+      .catch((error:any) => Observable.throw(error.json().error || 'Server error'));
   }
 
 

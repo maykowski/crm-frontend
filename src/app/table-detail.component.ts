@@ -9,6 +9,8 @@ import {Followup} from "./Followup";
 import {FormGroup} from "@angular/forms";
 import {Status} from "./status";
 import {StatusService} from "./status.service";
+import {Training} from "./training";
+import {Observable} from "rxjs";
 
 
 @Component({
@@ -23,6 +25,7 @@ import {StatusService} from "./status.service";
 export class TableDetailComponent {
   @Input()
   selectedRow: any = {};
+  row$:Observable<any>;
   dateFields: string[] = [];
   followups: Followup[] = [];
   newFollowup: Followup = new Followup();
@@ -40,7 +43,8 @@ export class TableDetailComponent {
   ngOnInit(): void {
     this.route.params
       .switchMap((params: Params) => {
-        return this.tableService.getTableDetail(+params['id']);
+        this.row$ = this.tableService.getTableDetail2(+params['id']);
+        return this.row$;
       })
       .subscribe((row: any) => {
         this.selectedRow = row;
@@ -146,6 +150,10 @@ export class TableDetailComponent {
       this.selectedRow.followups = followups;
     });
 
+  }
+
+  setToContact(t:any){
+    this.selectedRow.training = t;
   }
 
 }
