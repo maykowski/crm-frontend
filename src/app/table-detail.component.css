@@ -8,6 +8,13 @@
   font-style: normal;
 }
 
+.back {
+  background: url(svgicons.svg) no-repeat -131px -266px;
+  width: 29px;
+  height: 25px;
+  display: block;
+}
+
 ul > li {
   list-style: none;
 }

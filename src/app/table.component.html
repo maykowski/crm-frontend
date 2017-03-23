@@ -44,7 +44,7 @@
       </span>
     </div>
   </th>
-  <tr *ngFor="let row of items | paginate: { itemsPerPage: 10, currentPage: p }; let i = index;" class="table-row">
+  <tr *ngFor="let row of items | paginate: { itemsPerPage: size, currentPage: page, totalItems: total }; let i = index;" class="table-row">
     <td class="select-column">
       <span class="edit-row"   [routerLink]="['/detail', row.id]"></span>
     </td>
@@ -55,7 +55,7 @@
     <td *ngFor="let col of columns" [class.highlight]="col.hightlight" [hide]="!col.active" class="table-cell">
       <div *ngIf="col.active">
         <div *ngIf="!checkIfDate(row[col.name]) && !checkIfBoolean(row[col.name])">{{row[col.name]}}</div>
-        <div *ngIf="checkIfDate(row[col.name])">{{row[col.name] | date:"dd-MM-yyyy"}}</div>
+        <div *ngIf="checkIfDate(row[col.name])" [class.red]="ifDueDatePassed(row[col.name])">{{row[col.name] | date:"dd-MM-yyyy"}}</div>
         <div *ngIf="checkIfBoolean(row[col.name]) && row[col.name]==true" class="row-checkbox">
           <input type="checkbox" [(ngModel)]="row[col.name]">
           <label class="row-checkbox-checked"></label>
@@ -64,12 +64,10 @@
           <input type="checkbox" [(ngModel)]="row[col.name]">
           <label class="row-checkbox-unchecked"></label>
         </div>
-        <!--{{row[col.name]}}-->
       </div>
     </td>
-    <!--<td class="table-cell">{{row.training?.when}}</td>-->
   </tr>
 </table>
-<pagination-controls (pageChange)="p = $event"></pagination-controls>
+<pagination-controls (pageChange)="getPage($event)"></pagination-controls>
 
 

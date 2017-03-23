@@ -11,9 +11,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var core_1 = require('@angular/core');
 var http_1 = require("@angular/http");
 require('rxjs/add/operator/toPromise');
+var Rx_1 = require("rxjs/Rx");
+var router_1 = require("@angular/router");
 var TableService = (function () {
-    function TableService(http) {
+    function TableService(http, route) {
         this.http = http;
+        this.route = route;
         this.tableDetUrl = 'http://localhost:8080/contacts'; // URL to web api
         // getHeroesSlowly(): Promise<Hero[]> {
         //   return new Promise(resolve => {
@@ -30,10 +33,25 @@ var TableService = (function () {
             .then(function (response) { return response.json(); })
             .catch(this.handleError);
     };
-    TableService.prototype.getTable = function () {
-        return this.http.get(this.tableDetUrl)
-            .toPromise()
-            .then(function (response) { return response.json(); })
+    TableService.prototype.getTableDetail2 = function (id) {
+        var url = this.tableDetUrl + "/" + id;
+        return this.http.get(url).map(function (res) { return res.json(); })
+            .catch(function (error) { return Rx_1.Observable.throw(error.json().error || 'Server error'); });
+    };
+    // getTable(): Promise<any[]> {
+    //   return this.http.get(this.tableDetUrl)
+    //     .toPromise()
+    //     .then(response => response.json())
+    //     .catch(this.handleError);
+    // }
+    TableService.prototype.getTable = function (page, size) {
+        var params = new http_1.URLSearchParams();
+        params.set('page', String(page - 1));
+        params.set('size', String(size));
+        var requestOptions = new http_1.RequestOptions();
+        requestOptions.search = params;
+        return this.http.get(this.tableDetUrl, requestOptions)
+            .map(function (response) { return response.json(); })
             .catch(this.handleError);
     };
     TableService.prototype.handleError = function (error) {
@@ -64,7 +82,7 @@ var TableService = (function () {
     };
     TableService = __decorate([
         core_1.Injectable(), 
-        __metadata('design:paramtypes', [http_1.Http])
+        __metadata('design:paramtypes', [http_1.Http, router_1.ActivatedRoute])
     ], TableService);
     return TableService;
 }());

@@ -10,11 +10,19 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 var core_1 = require("@angular/core");
 var data_table_resource_1 = require("./data-table-resource");
+var table_service_1 = require("./table.service");
+var url_service_1 = require("./url.service");
 var TableComponent = (function () {
-    function TableComponent() {
+    function TableComponent(tableService, urlService) {
+        this.tableService = tableService;
+        this.urlService = urlService;
+        this.page = 1;
+        this.size = 10;
+        // private _itemsPromise: Promise<any[]>;
         this._columns = [];
         this._activableColumns = [];
         this._sortableColumns = [];
+        this.hiddenColumns = [];
         this._sortAsc = true;
         this.pagination = true;
         this._reloading = false;
@@ -26,18 +34,15 @@ var TableComponent = (function () {
         this._displayParams = {}; // params of the last finished reload
         this.autoReload = true;
     }
-    Object.defineProperty(TableComponent.prototype, "itemsPromise", {
-        get: function () {
-            return this._itemsPromise;
-        },
-        set: function (itemsPromise) {
-            this._itemsPromise = itemsPromise;
-            //this._onReloadFinished();
-        },
-        enumerable: true,
-        configurable: true
-    });
     Object.defineProperty(TableComponent.prototype, "columns", {
+        // @Input() get itemsPromise() {
+        //   return this._itemsPromise;
+        // }
+        //
+        // set itemsPromise(itemsPromise: Promise<any[]>) {
+        //   this._itemsPromise = itemsPromise;
+        //   //this._onReloadFinished();
+        // }
         get: function () {
             return this._columns;
         },
@@ -92,32 +97,62 @@ var TableComponent = (function () {
     });
     TableComponent.prototype.ngOnInit = function () {
         var _this = this;
-        this.itemsPromise.then(function (items) {
-            _this.columns = _this.extractColumns(items, _this.activableColumns);
-            _this.items = items;
-            for (var _i = 0, _a = _this.columns; _i < _a.length; _i++) {
-                var col = _a[_i];
-                col.property = col.name; //.replace(" ", "")
+        var page = this.page;
+        var size = this.size;
+        this.urlService.getParams().subscribe(function (p) {
+            if (Object.keys(p).length > 0) {
+                page = p['page'];
+                size = p['size'];
             }
-            _this._initDefaultClickEvents();
-            for (var _b = 0, _c = _this.sortableColumns; _b < _c.length; _b++) {
-                var sortCol = _c[_b];
-                for (var _d = 0, _e = _this.columns; _d < _e.length; _d++) {
-                    var col = _e[_d];
-                    if (col.name.toUpperCase() === sortCol.toUpperCase()) {
-                        col.sortable = true;
-                    }
-                }
-            }
-            _this.dataTableResouce = new data_table_resource_1.DataTableResource(_this.items);
-            return _this.dataTableResouce.query(_this._getRemoteParameters());
-        }).then(function (queryItems) {
-            _this.items = queryItems;
+        });
+        this.tableService.getTable(page, size).subscribe(function (items) {
+            _this.initTable(items, page);
         });
         this._displayParams = {
             sortBy: this.sortBy,
             sortAsc: this.sortAsc,
         };
+    };
+    TableComponent.prototype.initTable = function (items, page) {
+        this.items = items['content'];
+        this.total = items['totalElements'];
+        this.page = items['number'] + 1;
+        console.log("initTableData - inner", page);
+        this.addCalculatedFields(this.items);
+        this.columns = this.extractColumns(this.items, this.activableColumns);
+        for (var _i = 0, _a = this.columns; _i < _a.length; _i++) {
+            var col = _a[_i];
+            col.property = col.name; //.replace(" ", "")
+        }
+        this._initDefaultClickEvents();
+        for (var _b = 0, _c = this.columns; _b < _c.length; _b++) {
+            var col = _c[_b];
+            for (var _d = 0, _e = this.sortableColumns; _d < _e.length; _d++) {
+                var sortCol = _e[_d];
+                if (col.name.toUpperCase() === sortCol.toUpperCase()) {
+                    col.sortable = true;
+                }
+            }
+            for (var _f = 0, _g = this.hiddenColumns; _f < _g.length; _f++) {
+                var hideCol = _g[_f];
+                if (col.name.toUpperCase() === hideCol.toUpperCase()) {
+                    col.active = false;
+                }
+            }
+        }
+    };
+    TableComponent.prototype.addCalculatedFields = function (items) {
+        for (var _i = 0, items_1 = items; _i < items_1.length; _i++) {
+            var item = items_1[_i];
+            // trainings
+            // if (item.training){
+            //   item.trainingDate = new Date(item.training.when).toDateString();
+            // }
+            // followups
+            if (item.followups.length) {
+                item.followupCount = item.followups.length;
+            }
+        }
     };
     TableComponent.prototype._triggerReload = function () {
         var _this = this;
@@ -127,6 +162,22 @@ var TableComponent = (function () {
         this._scheduledReload = setTimeout(function () {
             _this.reloadItems();
         });
+    };
+    TableComponent.prototype.getPage = function (page) {
+        var _this = this;
+        console.log("getPage", page - 1);
+        // this.page=page;
+        this.urlService.setParams(page, this.size).subscribe();
+        this.tableService.getTable(page, this.size).subscribe(function (resp) { return _this.initTable(resp, _this.size); });
+        // this.urlService.setParams(page, this.size).subscribe(() => this.initTableData(page, this.size));
+        // this.urlService.setParams(this.page, this.size).subscribe();
+        // this.items = pre(10, page)
+        //   .do(res => {
+        //     this.total = res.total;
+        //     this.p = page;
+        //     this.loading = false;
+        //   })
+        //   .map(res => res.items);
     };
     TableComponent.prototype.reloadItems = function () {
         var _this = this;
@@ -167,15 +218,15 @@ var TableComponent = (function () {
         this.headerClick.emit({ column: column, event: event });
     };
     TableComponent.prototype.checkIfDate = function (value) {
-        if (value == true || value == false)
-            return false;
-        var date = Date.parse(value);
-        if (!isNaN(date) && isNaN(value)) {
+        if (typeof value === 'number' && value > 200000000000 && new Date(value) instanceof Date) {
             return true;
         }
         else {
             return false;
         }
+    };
+    TableComponent.prototype.ifDueDatePassed = function (dueDate) {
+        return new Date(dueDate) <= new Date();
     };
     TableComponent.prototype.checkIfBoolean = function (value) {
         return typeof (value) === "boolean";
@@ -223,10 +274,20 @@ var TableComponent = (function () {
         }
         this.multiSelect.emit(this.selectedItems);
     };
+    TableComponent.prototype.getLastFollowupDate = function (followups) {
+        var lastFUDate;
+        if (followups && followups.length > 0) {
+            var lastDueDate = followups[followups.length - 1].dueDate;
+            if (lastFUDate)
+                lastFUDate = new Date(lastDueDate).toDateString();
+        }
+        // console.log("getLastFollowupDate", lastFUDate);
+        return lastFUDate;
+    };
     __decorate([
         core_1.Input(), 
-        __metadata('design:type', Object)
-    ], TableComponent.prototype, "itemsPromise", null);
+        __metadata('design:type', Array)
+    ], TableComponent.prototype, "hiddenColumns", void 0);
     __decorate([
         core_1.Input(), 
         __metadata('design:type', Array)
@@ -271,7 +332,7 @@ var TableComponent = (function () {
             templateUrl: 'table.component.html',
             styleUrls: ['table.component.css']
         }), 
-        __metadata('design:paramtypes', [])
+        __metadata('design:paramtypes', [table_service_1.TableService, url_service_1.UrlService])
     ], TableComponent);
     return TableComponent;
 }());

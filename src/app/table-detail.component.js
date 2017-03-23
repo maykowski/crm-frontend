@@ -13,18 +13,25 @@ var router_1 = require("@angular/router");
 var table_service_1 = require("./table.service");
 var common_1 = require("@angular/common");
 require("rxjs/add/operator/switchMap");
+var followup_service_1 = require("./followup.service");
+var Followup_1 = require("./Followup");
+var status_service_1 = require("./status.service");
 var TableDetailComponent = (function () {
-    function TableDetailComponent(tableService, route, location) {
+    function TableDetailComponent(tableService, followupService, statusService, route, location) {
         this.tableService = tableService;
+        this.followupService = followupService;
+        this.statusService = statusService;
         this.route = route;
         this.location = location;
         this.selectedRow = {};
         this.dateFields = [];
+        this.followups = [];
+        this.newFollowup = new Followup_1.Followup();
         this.myDatePickerOptions = {
             dateFormat: 'dd-mm-yyyy',
             showClearDateBtn: false,
             editableDateField: false,
-            width: '50%',
+            width: '100%',
             height: '30px'
         };
     }
@@ -32,13 +39,12 @@ var TableDetailComponent = (function () {
         var _this = this;
         this.route.params
             .switchMap(function (params) {
-            console.log("ts", _this.tableService);
-            console.log("ts", params['id']);
-            console.log("ts", _this.tableService.getTableDetail(+params['id']));
-            return _this.tableService.getTableDetail(+params['id']);
+            _this.row$ = _this.tableService.getTableDetail2(+params['id']);
+            return _this.row$;
         })
             .subscribe(function (row) {
             _this.selectedRow = row;
+            console.log("ngOnInit");
             _this.fields = _this.extractFieldNames(row);
             for (var _i = 0, _a = _this.fields; _i < _a.length; _i++) {
                 var field = _a[_i];
@@ -52,6 +58,7 @@ var TableDetailComponent = (function () {
                 }
             }
         });
+        this.statusService.getStatuses().then(function (statuses) { return _this.statuses = statuses; });
     };
     TableDetailComponent.prototype.goBack = function () {
         this.location.back();
@@ -105,6 +112,30 @@ var TableDetailComponent = (function () {
     TableDetailComponent.prototype.checkIfBoolean = function (value) {
         return typeof (value) === "boolean";
     };
+    TableDetailComponent.prototype.convertDate = function (input) {
+        var parts = input.split('-');
+        if (parts.length == 3) {
+            console.log("init", parts[0], parts[1], parts[2]);
+            return parts[2] + '-' + parts[1] + '-' + parts[0];
+        }
+        else {
+            console.error("!!! date input cannot be parsed to yyyy-MM-dd");
+        }
+    };
+    TableDetailComponent.prototype.createFollowup = function (followup) {
+        var _this = this;
+        if (followup.dueDate)
+            followup.dueDate = this.convertDate(followup.dueDate['formatted']);
+        this.followupService.create(followup, this.selectedRow.id).then(function () {
+            return _this.followupService.getFollowups(_this.selectedRow.id);
+        }).then(function (followups) {
+            console.log("saveNew", followups);
+            _this.selectedRow.followups = followups;
+        });
+    };
+    TableDetailComponent.prototype.setToContact = function (t) {
+        this.selectedRow.training = t;
+    };
     __decorate([
         core_1.Input(), 
         __metadata('design:type', Object)
@@ -112,10 +143,10 @@ var TableDetailComponent = (function () {
     TableDetailComponent = __decorate([
         core_1.Component({
             moduleId: module.id,
-            template: "\n<a href=\"#\" (click)=\"goBack()\">back</a>\n\n{{selectedRow.NAME}}\n\n<ul>\n<li *ngFor=\"let field of fields\">\n<div class=\"row field-row\">\n<div class=\"col-lg-3 text-right\">\n<label for=\"field_{{field}}\" class=\"field-label\">{{field}}</label>\n</div>\n<div class=\"col-lg-3\">\n<input type=\"text\" *ngIf=\"!checkIfBoolean(selectedRow[field]) && !checkIfDateField(field)\" [maxlength]=\"100\" class=\"field-value\"\nid=\"field_{{field}}\" [disabled]=\"field=='id'\" [(ngModel)]=\"selectedRow[field]\">\n<input type=\"checkbox\" *ngIf=\"checkIfBoolean(selectedRow[field])\" id=\"field_{{field}}\" [(ngModel)]=\"selectedRow[field]\">\n<my-date-picker *ngIf=\"checkIfDateField(field)\" [(ngModel)]=\"selectedRow[field]\" [options]=\"myDatePickerOptions\" (dateChanged)=\"onDateChanged($event)\"></my-date-picker>\n\n</div>\n</div>\n</li>\n</ul>\n\n<div>\n<input type=\"button\" class=\"btn\" value=\"Save\" (click)=\"save()\">\n<input type=\"button\" class=\"link\" value=\"Cancel\" (click)=\"goBack()\">\n</div>\n\n\n",
+            templateUrl: 'table-detail.component.html',
             styleUrls: ['table-detail.component.css']
         }), 
-        __metadata('design:paramtypes', [table_service_1.TableService, router_1.ActivatedRoute, common_1.Location])
+        __metadata('design:paramtypes', [table_service_1.TableService, followup_service_1.FollowupService, status_service_1.StatusService, router_1.ActivatedRoute, common_1.Location])
     ], TableDetailComponent);
     return TableDetailComponent;
 }());

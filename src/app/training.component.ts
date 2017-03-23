@@ -8,6 +8,7 @@ import {Observable} from "rxjs/Rx";
   selector: 'training',
   template: `
 <select [(ngModel)]="selectedTr" name="selectedTr" id="selectedTr" #sTr="ngModel" (ngModelChange)="onSelect($event)" class="form-control" >
+<option [ngValue]="null"></option>
 <option *ngFor="let tr of trainings" [ngValue]="tr">{{tr?.when | date:'dd-MM-yyyy'}}</option>
 </select>
 `,
@@ -30,7 +31,7 @@ export class TrainingComponent {
       this.trainings = trs;
       return this.contact;
     }).subscribe((contact: Contact) => {
-      this.selectedTr = this.trainings.find(t=>t.id === contact.training.id);
+      this.selectedTr = this.trainings.find(t=>t.id === (contact.training?contact.training.id:0));
       return;
     })
   }

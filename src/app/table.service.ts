@@ -1,8 +1,9 @@
 import {Injectable} from '@angular/core';
-import {Http, Headers, Response} from "@angular/http";
+import {Http, Headers, Response, URLSearchParams, RequestOptions} from "@angular/http";
 import 'rxjs/add/operator/toPromise';
 import {Observable} from "rxjs/Rx";
 import {Contact} from "./contact";
+import {ActivatedRoute} from "@angular/router";
 
 @Injectable()
 export class TableService{
@@ -10,7 +11,7 @@ export class TableService{
 
   private tableDetUrl = 'http://localhost:8080/contacts';  // URL to web api
 
-  constructor(private http: Http) { }
+  constructor(private http: Http, private route: ActivatedRoute) { }
 
 
   getTableDetail(id: number): Promise<any> {
@@ -26,13 +27,22 @@ export class TableService{
       .catch((error:any) => Observable.throw(error.json().error || 'Server error'));
   }
 
+  getTable(page:number, size:number){
+    let params: URLSearchParams = new URLSearchParams();
+    params.set('page', String(page-1));
+    params.set('size', String(size));
 
-  getTable(): Promise<any[]> {
-    return this.http.get(this.tableDetUrl)
-      .toPromise()
-      .then(response => response.json())
+    let requestOptions = new RequestOptions();
+    requestOptions.search = params;
+    return this.http.get(this.tableDetUrl,requestOptions)
+      // .toPromise()
+      .map(response => response.json())
       .catch(this.handleError);
   }
+
+
+
+
 
   private handleError(error: any): Promise<any> {
     console.error('An error occurred', error); // for demo purposes only

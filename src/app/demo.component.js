@@ -8,22 +8,53 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-var core_1 = require('@angular/core');
-var data_table_resource_1 = require("./data-table-resource");
+var core_1 = require("@angular/core");
 var table_service_1 = require("./table.service");
+var url_service_1 = require("./url.service");
 var DemoComponent = (function () {
-    function DemoComponent(tableService) {
+    function DemoComponent(tableService, urlService) {
         this.tableService = tableService;
-        this.rows = [];
+        this.urlService = urlService;
         this.activableColumns = ['name'];
-        this.sortableColumns = ['name', 'job title', "DATE"];
+        this.sortableColumns = ['name', 'followups', 'trainingDate', 'lastFollowupDate'];
+        this.hiddenColumns = ['summary', 'lid', 'createDate', 'updateDate', 'id', 'link', 'email', 'training', 'followups', 'phone', 'location'];
         this.itemCount = 0;
+        this.collection = [];
+        // for (let i = 1; i <= 100; i++) {
+        //   this.collection.push(`item ${i}`);
+        // }
         // this.itemResource.count().then(count => this.itemCount = count);
     }
     DemoComponent.prototype.ngOnInit = function () {
-        var _this = this;
-        this.tableService.getTable().then(function (items) { return _this.itemResource = new data_table_resource_1.DataTableResource(items); });
-        this.rowsPromise = this.tableService.getTable();
+        // this.tableService.getTable().then(items=>  this.itemResource = new DataTableResource(items));
+        // this.rowsPromise = this.tableService.getTable("5","1").toPromise();
+        // let page:number = 0;
+        // let size:number = 5;
+        //
+        // this.urlService.getParams().flatMap(p=>{
+        //   if (Object.keys(p).length > 0) {
+        //     console.log(p)
+        //     page = p['page'];
+        //     size = p['size'];
+        //   }
+        //   return this.urlService.setParams(page, size);
+        // }).flatMap(response => {
+        //   console.log("get", response);
+        //   this.rowsPromise =  this.tableService.getTable(page,size).toPromise();
+        //   console.log("rowPromise");
+        //
+        //   return this.rowsPromise;
+        // }).subscribe(
+        //
+        //   items => {this.itemResource = new DataTableResource(items);       console.log("DataTableResource", items);
+        //   }
+        // )
+        // this.urlService.set("page="+5).then(response=>{
+        //   console.log("set", response);
+        // });
+        // this.urlService.get('fragment').subscribe(response=>{
+        //   console.log("get", response);
+        // })
     };
     DemoComponent.prototype.getSelected = function (items) {
         console.log("gs", items);
@@ -32,9 +63,9 @@ var DemoComponent = (function () {
         core_1.Component({
             moduleId: module.id,
             selector: 'demo',
-            template: "<table-component (reload)=\"reloadItems($event)\"         [itemsPromise]=\"rowsPromise\" (multiSelect)=\"getSelected($event)\"\n[activableColumns]=\"activableColumns\"         [itemCount]=\"itemCount\" [sortableColumns]=\"sortableColumns\"\n\n></table-component>"
+            template: "\n<!--<div *ngIf=\"rowsPromise\">-->\n<table-component (reload)=\"reloadItems($event)\"    (multiSelect)=\"getSelected($event)\"\n[activableColumns]=\"activableColumns\"         [itemCount]=\"itemCount\" [sortableColumns]=\"sortableColumns\" [hiddenColumns]=\"hiddenColumns\"></table-component>\n<!--</div>-->\n<!--<server-example [data]=\"collection\"></server-example>-->\n\n\n"
         }), 
-        __metadata('design:paramtypes', [table_service_1.TableService])
+        __metadata('design:paramtypes', [table_service_1.TableService, url_service_1.UrlService])
     ], DemoComponent);
     return DemoComponent;
 }());

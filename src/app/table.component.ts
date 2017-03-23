@@ -3,6 +3,8 @@ import {Column} from "./Column";
 import {DataTableParams} from "./types";
 import {DataTableResource} from "./data-table-resource";
 import {Followup} from "./followup";
+import {TableService} from "./table.service";
+import {UrlService} from "./url.service";
 
 @Component({
   moduleId: module.id,
@@ -13,21 +15,14 @@ import {Followup} from "./followup";
 export class TableComponent implements OnInit {
 
   private items: any[];
-  private _itemsPromise: Promise<any[]>;
+  private total: number;
+  page: number = 1;
+  size: number = 10;
 
   private _columns: Column[] = [];
   private _activableColumns: string[] = [];
   private _sortableColumns: string[] = [];
   @Input() private hiddenColumns: string[] = [];
-
-  @Input() get itemsPromise() {
-    return this._itemsPromise;
-  }
-
-  set itemsPromise(itemsPromise: Promise<any[]>) {
-    this._itemsPromise = itemsPromise;
-    //this._onReloadFinished();
-  }
 
   get columns() {
     return this._columns;
@@ -35,7 +30,6 @@ export class TableComponent implements OnInit {
 
   set columns(columns: Column[]) {
     this._columns = columns;
-    //this._onReloadFinished();
   }
 
   @Input() get activableColumns(): string[] {
@@ -63,7 +57,6 @@ export class TableComponent implements OnInit {
 
   _reloading = false;
   _scheduledReload: number = null;
-  // @Output() reload = new EventEmitter();
   @Output() headerClick = new EventEmitter();
   @Output() multiSelect = new EventEmitter();
 
@@ -92,47 +85,66 @@ export class TableComponent implements OnInit {
     this._triggerReload();
   }
 
-  dataTableResouce: DataTableResource<any>;
+  constructor(private tableService: TableService, private urlService: UrlService) {
+  }
 
   ngOnInit() {
-    this.itemsPromise.then(items => {
-      this.columns = this.extractColumns(items, this.activableColumns);
-      this.items = items;
+    let page = this.page;
+    let size = this.size;
 
-      for (let col of this.columns) {
-        col.property = col.name;//.replace(" ", "")
+    this.urlService.getParams().subscribe(p => {
+      if (Object.keys(p).length > 0) {
+        page = p['page'];
+        size = p['size'];
       }
-      this._initDefaultClickEvents();
-
-      for (let col of this.columns) {
-        for (let sortCol of this.sortableColumns) {
-          if (col.name.toUpperCase() === sortCol.toUpperCase()) {
-            col.sortable = true;
-          }
-        }
-
-        for (let hideCol of this.hiddenColumns) {
-          if (col.name.toUpperCase() === hideCol.toUpperCase()) {
-            col.active = false;
-          }
-        }
-      }
-
-      this.dataTableResouce = new DataTableResource(this.items);
-      return this.dataTableResouce.query(this._getRemoteParameters())
-
-    }).then(queryItems => {
-      this.items = queryItems;
-      for (let item of this.items) {
-        item.followups = this.getLastFollowupDate(item.followups);
-        item.lastFollowupDate = this.getLastFollowupDate(item.followups);
-      }
+    });
+    this.tableService.getTable(page, size).subscribe((items) => {
+      this.initTable(items, page);
     });
 
     this._displayParams = {
       sortBy: this.sortBy,
       sortAsc: this.sortAsc,
     };
+  }
+
+  private initTable(items: any[], page: number) {
+    this.items = items['content'];
+    this.total = items['totalElements'];
+    this.page = items['number'] + 1;
+    console.log("initTableData - inner", page);
+
+    this.addCalculatedFields(this.items);
+
+    this.columns = this.extractColumns(this.items, this.activableColumns);
+
+
+    for (let col of this.columns) {
+      col.property = col.name;//.replace(" ", "")
+    }
+    this._initDefaultClickEvents();
+
+    for (let col of this.columns) {
+      for (let sortCol of this.sortableColumns) {
+        if (col.name.toUpperCase() === sortCol.toUpperCase()) {
+          col.sortable = true;
+        }
+      }
+
+      for (let hideCol of this.hiddenColumns) {
+        if (col.name.toUpperCase() === hideCol.toUpperCase()) {
+          col.active = false;
+        }
+      }
+    }
+  }
+
+  addCalculatedFields(items: any[]) {
+    for (let item of items) {
+      if (item.followups.length) {
+        item.followupCount = item.followups.length;
+      }
+    }
   }
 
   _triggerReload() {
@@ -142,6 +154,15 @@ export class TableComponent implements OnInit {
     this._scheduledReload = setTimeout(() => {
       this.reloadItems();
     });
+  }
+
+  getPage(page: number) {
+    console.log("getPage", page - 1);
+    // this.page=page;
+    this.urlService.setParams(page, this.size).subscribe();
+    this.tableService.getTable(page, this.size).subscribe(
+      resp => this.initTable(resp, this.size)
+    )
   }
 
   reloadItems() {
@@ -154,15 +175,10 @@ export class TableComponent implements OnInit {
 
   private _getRemoteParameters(): DataTableParams {
     let params = <DataTableParams>{};
-
     if (this.sortBy) {
       params.sortBy = this.sortBy;
       params.sortAsc = this.sortAsc;
     }
-
-
-    // params.limit = 10;
-    // params.offset = 0;
     return params;
   }
 
@@ -192,13 +208,15 @@ export class TableComponent implements OnInit {
   }
 
   checkIfDate(value: any): boolean {
-    if (value == true || value == false) return false;
-    let date = Date.parse(value);
-    if (!isNaN(date) && isNaN(value)) {
+    if (typeof value === 'number' && value > 200000000000 && new Date(value) instanceof Date) {
       return true;
     } else {
       return false;
     }
+  }
+
+  ifDueDatePassed(dueDate: string) {
+    return new Date(dueDate) <= new Date()
   }
 
   checkIfBoolean(value: any) {
@@ -248,13 +266,11 @@ export class TableComponent implements OnInit {
 
   getLastFollowupDate(followups: Followup[]): String {
     let lastFUDate: string;
-    if (followups.length > 0) {
+    if (followups && followups.length > 0) {
       let lastDueDate = followups[followups.length - 1].dueDate;
       if (lastFUDate)
         lastFUDate = new Date(lastDueDate).toDateString()
     }
-    console.log("getLastFollowupDate", lastFUDate);
-
     return lastFUDate;
   }
 }

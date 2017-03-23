@@ -19,6 +19,7 @@ import {OrderByPipe} from "./utils/order-by";
 import {StatusService} from "./status.service";
 import {TrainingComponent} from "./training.component";
 import {TrainingService} from "./training.service";
+import {UrlService} from "./url.service";
 
 @NgModule({
   imports:      [ BrowserModule, FormsModule, PopoverModule, DndModule.forRoot(), Ng2PaginationModule, HttpModule,
@@ -26,6 +27,6 @@ import {TrainingService} from "./training.service";
   ],
   declarations: [ AppComponent, DemoComponent, TableComponent, TableDetailComponent, MinPipe, Hide, OrderByPipe, TrainingComponent],
   bootstrap:    [ AppComponent ],
-  providers: [TableService, FollowupService, StatusService, TrainingService ]
+  providers: [TableService, FollowupService, StatusService, TrainingService, UrlService ]
 })
 export class AppModule { }
