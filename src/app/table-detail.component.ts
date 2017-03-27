@@ -3,13 +3,11 @@ import {ActivatedRoute, Params} from "@angular/router";
 import {TableService} from "./table.service";
 import {Location} from "@angular/common";
 import "rxjs/add/operator/switchMap";
-import {IMyOptions, IMyDateModel} from "mydatepicker";
+import {IMyDateModel, IMyOptions} from "mydatepicker";
 import {FollowupService} from "./followup.service";
 import {Followup} from "./Followup";
-import {FormGroup} from "@angular/forms";
 import {Status} from "./status";
 import {StatusService} from "./status.service";
-import {Training} from "./training";
 import {Observable} from "rxjs";
 
 
@@ -25,11 +23,11 @@ import {Observable} from "rxjs";
 export class TableDetailComponent {
   @Input()
   selectedRow: any = {};
-  row$:Observable<any>;
+  row$: Observable<any>;
   dateFields: string[] = [];
   followups: Followup[] = [];
   newFollowup: Followup = new Followup();
-  statuses:Status[];
+  statuses: Status[];
 
 
   private myDatePickerOptions: IMyOptions = {
@@ -93,7 +91,7 @@ export class TableDetailComponent {
   fields: string[];
 
 
-  constructor(private tableService: TableService, private followupService: FollowupService, private statusService:StatusService, private route: ActivatedRoute, private location: Location) {
+  constructor(private tableService: TableService, private followupService: FollowupService, private statusService: StatusService, private route: ActivatedRoute, private location: Location) {
   }
 
   onDateChanged(event: IMyDateModel) {
@@ -131,17 +129,20 @@ export class TableDetailComponent {
     return typeof(value) === "boolean"
   }
 
-  convertDate(input:string):string{
+  convertDate(input: string): string {
     let parts = input.split('-');
     if (parts.length == 3) {
       console.log("init", parts[0], parts[1], parts[2]);
       return parts[2] + '-' + parts[1] + '-' + parts[0];
-    }else{
+    } else {
       console.error("!!! date input cannot be parsed to yyyy-MM-dd");
     }
   }
 
   createFollowup(followup: Followup): void {
+    console.log("createFollowup", followup);
+
+    if (!Object.keys(followup).length) return;
     if (followup.dueDate) followup.dueDate = this.convertDate(followup.dueDate['formatted']);
     this.followupService.create(followup, this.selectedRow.id).then(() => {
       return this.followupService.getFollowups(this.selectedRow.id)
@@ -152,7 +153,7 @@ export class TableDetailComponent {
 
   }
 
-  setToContact(t:any){
+  setToContact(t: any) {
     this.selectedRow.training = t;
   }
 
